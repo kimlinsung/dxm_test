@@ -1,4 +1,7 @@
+.claude/
+.DS_Store
 __pycache__/
 *.pyc
-output/
-.DS_Store
+starpick/output/
+_measure.html
+_v*.html

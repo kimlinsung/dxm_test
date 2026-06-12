@@ -1,0 +1,302 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<style>
+  *{ margin:0; padding:0; box-sizing:border-box; border-radius:0; }
+  :root{
+    --ink:#141414; --sub:#525252; --faint:#7a766f; --line:#d9d6d0; --paper:#f5f4f0; --red:#bf3a1e;
+  }
+  @page{ size:A4; margin:0; }
+  body{ font-family:"Hiragino Sans GB","PingFang SC","Heiti SC",sans-serif; background:#b9b6b0;
+        color:var(--ink); -webkit-font-smoothing:antialiased; }
+  @media print{ body{ background:#fff; } }
+  .serif{ font-family:"Songti SC","STSong","Noto Serif SC",serif; }
+  .mono{ font-family:"SF Mono",Menlo,Consolas,monospace; }
+  a{ color:var(--red); text-decoration:underline; text-decoration-thickness:.5px; text-underline-offset:1.5px; }
+  .page{ width:794px; height:1123px; background:#fffefb; margin:0 auto; padding:16px 26px 11px;
+         display:flex; flex-direction:column; gap:7px; overflow:hidden; }
+  .page>*{ flex:none; }
+
+  /* masthead */
+  .mh{ display:flex; justify-content:space-between; align-items:flex-end; }
+  .mh .title{ font-size:27px; font-weight:900; letter-spacing:2px; line-height:1.08; }
+  .mh .title em{ font-style:normal; color:var(--red); }
+  .mh .kicker{ font-size:10.5px; color:var(--sub); margin-top:2px; letter-spacing:.5px; }
+  .mh .who{ text-align:right; font-size:8.5px; color:var(--sub); line-height:1.6; }
+  .mh .who b{ font-size:10px; color:var(--ink); }
+  .rule2{ border-top:3px solid var(--ink); border-bottom:1px solid var(--ink); height:4px; }
+  .tagline{ font-size:14px; font-weight:900; }
+  .tagline em{ font-style:normal; color:var(--red); }
+  .insight{ background:var(--ink); color:#f2efe9; padding:6px 12px; font-size:10.2px; line-height:1.5; }
+  .insight .k{ color:#ff8b66; font-weight:800; margin-right:8px; letter-spacing:2px; }
+  .insight b{ color:#fff; }
+
+  /* stat band */
+  .band{ display:flex; border:1.5px solid var(--ink); }
+  .cell{ flex:1; padding:6px 10px 5px; border-right:1px solid var(--line); }
+  .cell:last-child{ border-right:0; }
+  .cell .v{ font-size:16.5px; font-weight:900; color:var(--red); letter-spacing:.3px; }
+  .cell .v small{ font-size:10px; color:var(--ink); }
+  .cell .l{ font-size:8px; color:var(--sub); margin-top:1px; line-height:1.35; }
+
+  /* sections */
+  .row{ display:grid; grid-template-columns:1fr 1fr; gap:16px; }
+  .sec{ min-width:0; }
+  .sh{ border-top:2px solid var(--ink); padding-top:4px; margin-bottom:6px; display:flex; align-items:baseline; gap:8px; }
+  .sh .no{ font-size:10px; font-weight:800; color:var(--red); letter-spacing:1px; }
+  .sh h2{ font-size:12.5px; font-weight:900; letter-spacing:1px; }
+  .sh .hint{ margin-left:auto; font-size:7.8px; color:var(--faint); }
+
+  p,li{ font-size:9.6px; line-height:1.52; color:#333; }
+  b{ color:var(--ink); }
+  .hl{ color:var(--red); font-weight:700; }
+  sup{ color:var(--red); font-size:6.5px; font-weight:700; }
+  sup a{ text-decoration:none; }
+  ul{ list-style:none; }
+  ul li{ padding-left:8px; position:relative; margin-bottom:3px; }
+  ul li::before{ content:""; position:absolute; left:0; top:6px; width:3.5px; height:3.5px; background:var(--ink); }
+  .lbl{ font-size:8.2px; font-weight:800; color:var(--red); letter-spacing:2px; margin:7px 0 4px; }
+
+  .chips{ display:flex; gap:8px; margin-bottom:6px; }
+  .chip{ flex:1; background:var(--paper); border:1px solid var(--line); padding:6px 9px; }
+  .chip .t{ font-size:9.6px; font-weight:800; }
+  .chip .d{ font-size:8.6px; color:var(--sub); line-height:1.45; margin-top:1px; }
+
+  /* 三层断层图 */
+  .layers{ display:flex; align-items:stretch; margin:2px 0 5px; }
+  .layer{ flex:1; border:1px solid var(--line); background:var(--paper); padding:5px 8px; }
+  .layer.gap{ border:1.5px solid var(--red); background:#fff; }
+  .layer .ln1{ font-size:8px; font-weight:800; letter-spacing:1px; color:var(--sub); }
+  .layer.gap .ln1{ color:var(--red); }
+  .layer .ln2{ font-size:9.2px; font-weight:800; margin-top:1px; }
+  .layer .ln3{ font-size:8px; color:var(--sub); margin-top:1px; }
+  .larr{ display:flex; align-items:center; padding:0 3px; color:var(--faint); font-size:11px; }
+
+  /* 实截证据 */
+  .proof{ display:flex; gap:7px; margin-bottom:6px; }
+  .pf{ flex:1; min-width:0; }
+  .pf img{ width:100%; height:70px; object-fit:cover; object-position:top; display:block; border:1px solid var(--ink); }
+  .pf .cap{ font-size:7.8px; color:var(--sub); line-height:1.4; margin-top:2px; }
+  .pf .cap b{ color:var(--ink); }
+  .quote{ font-size:9.2px; line-height:1.42; color:#333; padding-left:8px; border-left:2px solid var(--ink); margin-bottom:3px; }
+  .quote span{ color:var(--faint); font-size:8.2px; }
+
+  /* mvp */
+  .mvp{ display:grid; grid-template-columns:1.7fr 1fr; gap:12px; }
+  .flow{ display:flex; margin-bottom:7px; }
+  .fstep{ flex:1; border:1px solid var(--ink); padding:4px 6px; margin-right:-1px; background:#fff; }
+  .fstep .sn{ font-size:7px; font-weight:800; color:var(--red); letter-spacing:1px; }
+  .fstep .tt{ font-size:9.4px; font-weight:900; margin:1px 0; }
+  .fstep .dd{ font-size:7.7px; color:var(--sub); line-height:1.35; }
+  .prompts{ display:grid; grid-template-columns:1fr 1fr 1fr; gap:6px; margin-bottom:7px; }
+  .pc{ border:1px solid var(--line); background:var(--paper); padding:5px 8px; }
+  .pc .pt{ font-size:8.8px; font-weight:800; margin-bottom:1px; }
+  .pc .pt i{ font-style:normal; color:var(--red); }
+  .pc .px{ font-size:8px; color:var(--sub); line-height:1.45; }
+  .eng{ border:1.5px solid var(--ink); padding:6px 9px; background:#fff; }
+  .eng .et{ font-size:8.2px; font-weight:800; letter-spacing:2px; margin-bottom:3px; }
+  .eng .et i{ font-style:normal; color:var(--red); }
+  .eng li{ font-size:8.8px; margin-bottom:2px; line-height:1.45; }
+  .shots{ display:flex; flex-direction:column; gap:7px; }
+  .shot img{ width:100%; display:block; border:1px solid var(--ink); }
+  .shot .cap{ font-size:7.8px; color:var(--sub); margin-top:2px; }
+  .shot .cap b{ color:var(--red); }
+
+  /* biz / plan */
+  .price{ width:100%; border-collapse:collapse; margin:4px 0 5px; }
+  .price td{ font-size:8.8px; padding:3px 7px; border:1px solid var(--line); line-height:1.4; }
+  .price tr td:first-child{ font-weight:800; background:var(--paper); white-space:nowrap; }
+  .price .pp{ color:var(--red); font-weight:800; white-space:nowrap; }
+  .econ{ display:flex; gap:6px; margin:5px 0 2px; flex-wrap:wrap; }
+  .ec{ border:1px solid var(--line); background:var(--paper); font-size:8.4px; padding:2.5px 7px; }
+  .ec b{ color:var(--red); }
+
+  .wk{ display:flex; gap:7px; margin-bottom:3px; }
+  .wl{ flex:none; width:26px; background:var(--ink); color:#fff; font-size:9px; font-weight:800;
+       display:flex; align-items:center; justify-content:center; }
+  .wk:nth-of-type(2) .wl{ background:var(--red); }
+  .wc{ flex:1; }
+  .gokill{ border:1.5px solid var(--red); padding:5px 9px; margin-top:5px; }
+  .gokill .gt{ font-size:8.4px; font-weight:800; color:var(--red); letter-spacing:1px; margin-bottom:2px; }
+  .gokill p{ font-size:9px; }
+
+  /* footer */
+  .ft{ margin-top:auto; }
+  .risk{ display:flex; gap:10px; border-top:2px solid var(--ink); padding-top:5px; }
+  .risk div{ flex:1; font-size:7.9px; color:var(--sub); line-height:1.45; }
+  .risk b{ color:var(--ink); }
+  .srcs{ border-top:1px solid var(--line); margin-top:5px; padding-top:4px; font-size:7.2px; color:var(--faint); line-height:1.6; }
+  .meta{ margin-top:4px; display:flex; justify-content:space-between; gap:16px; font-size:7.8px; color:var(--sub); }
+  .meta b{ color:var(--ink); }
+  .meta .r{ flex:none; text-align:right; color:var(--faint); }
+</style>
+</head>
+<body>
+<div class="page">
+
+  <!-- masthead -->
+  <div class="mh">
+    <div>
+      <div class="title serif">摘星 <em>StarPick</em></div>
+      <div class="kicker">对标爆款「拆解 → 平移」Agent ——— 给短视频博主与内容种草商家</div>
+    </div>
+    <div class="who">「小满摘星计划」笔试 · 方向三 内容AI<br>申请人 <b>金林松</b> ｜ 2026.06</div>
+  </div>
+  <div class="rule2"></div>
+  <div class="tagline serif">粘贴一条对标爆款链接，<em>3 分钟</em>拿到一份按你的人设与产品改写好的<em>可拍脚本</em>。</div>
+  <div class="insight"><span class="k">核心洞察</span>创作者不缺“能写的 AI”，缺的是把<b>对标爆款</b>变成<b>自己作品</b>的最后一公里——这件事，他们今天正在<b>花钱请人干</b>。摘星把它产品化：价格 1/30，速度 20 倍。</div>
+
+  <!-- 四个数字 -->
+  <div class="band">
+    <div class="cell"><div class="v">¥30–200<small>/条</small></div><div class="l">人工拆解服务在售价，多家月销 100+<sup><a href="https://s.taobao.com/search?q=%E5%AF%B9%E6%A0%87%E8%B4%A6%E5%8F%B7%E6%8B%86%E8%A7%A3">1</a></sup></div></div>
+    <div class="cell"><div class="v">60–90<small> 分钟</small></div><div class="l">手工拆解一条对标的耗时（逐帧＋转写＋笔记）</div></div>
+    <div class="cell"><div class="v">1.4<small> 亿美元</small></div><div class="l">可灵AI 2025 年收入<sup><a href="https://www.yicai.com/news/102919501.html">2</a></sup>——生成层付费已被验证</div></div>
+    <div class="cell"><div class="v">3880<small> 万</small></div><div class="l">职业主播规模<sup><a href="http://www.news.cn/tech/20250327/39664326a8244f9ba7489821817fcd68/c.html">5</a></sup>——策略层还无人服务</div></div>
+  </div>
+
+  <div class="row">
+    <!-- 01 -->
+    <div class="sec">
+      <div class="sh"><span class="no">01</span><h2>机会判断</h2><span class="hint">用户 ／ 痛点 ／ 为什么是现在</span></div>
+      <div class="chips">
+        <div class="chip"><div class="t">腰尾部博主（0.5万–50万粉）</div><div class="d">接商单带货，选题脚本占一半工时</div></div>
+        <div class="chip"><div class="t">种草商家／代运营</div><div class="d">矩阵周产 15 条+，同质化被限流</div></div>
+      </div>
+      <div class="lbl">痛点</div>
+      <ul>
+        <li><b>找对标易、用对标难：</b>囤几百条爆款收藏，开拍时仍不知第一句说什么</li>
+        <li><b>拆解贵且慢：</b>手工 <span class="hl">60–90 分钟/条</span>；通用 AI 又只给没有结构依据的“正确的废话”</li>
+        <li><b>商家批量搬运被限流：</b>需要“换骨架不换皮”的二创，而不是抄文案</li>
+      </ul>
+      <div class="lbl">为什么是现在 —— 工具链中间缺了一层</div>
+      <div class="layers">
+        <div class="layer"><div class="ln1">数据层</div><div class="ln2">新榜 · 蝉妈妈</div><div class="ln3">告诉你“什么火”</div></div>
+        <div class="larr">▸</div>
+        <div class="layer"><div class="ln1">生成层</div><div class="ln2">可灵 · 即梦 · 剪映</div><div class="ln3">帮你“做出来”</div></div>
+        <div class="larr">▸</div>
+        <div class="layer gap"><div class="ln1">策略层 ＝ 空白</div><div class="ln2">为什么火＋我怎么拍</div><div class="ln3">摘星的位置</div></div>
+      </div>
+      <ul>
+        <li><b>技术拐点：</b>多模态模型能“看懂”镜头与节奏了，单条分析成本 <span class="hl">≈¥0.3</span></li>
+        <li><b>市场拐点：</b>日产 1.3 亿条<sup><a href="http://www.news.cn/tech/20250327/39664326a8244f9ba7489821817fcd68/c.html">5</a></sup>供给爆炸，“抄得对”取代“发得多”</li>
+      </ul>
+    </div>
+
+    <!-- 02 -->
+    <div class="sec">
+      <div class="sh"><span class="no">02</span><h2>用户证据</h2><span class="hint">站内检索实截（2026.06 自摄）＋付费锚点＋行业旁证</span></div>
+      <div class="proof">
+        <div class="pf"><img src="assets/douyin_search.png" alt=""><div class="cap"><b>抖音</b>搜「账号对标拆解」：代拆与教程刷屏，已有人用 Coze/Codex 自救</div></div>
+        <div class="pf"><img src="assets/xhs_search.png" alt=""><div class="cap"><b>小红书</b>搜「对标拆解模板」：教程笔记最高 6766 赞，模板词霸榜联想</div></div>
+        <div class="pf"><img src="assets/kuaishou_search.png" alt=""><div class="cap"><b>快手</b>同词：拆解教学与代做已成生态</div></div>
+      </div>
+      <ul>
+        <li><b>付钱的证据：</b>淘宝/闲鱼在售拆解服务 <span class="hl">¥30–200/条</span><sup><a href="https://s.taobao.com/search?q=%E5%AF%B9%E6%A0%87%E8%B4%A6%E5%8F%B7%E6%8B%86%E8%A7%A3">1</a></sup>、拆解课 ¥199–999——用户已在为“答案”付费</li>
+        <li><b>行业旁证：</b><a href="https://www.yicai.com/news/102919501.html">可灵AI 2025 年收入约 1.4 亿美元</a><sup>2</sup>、<a href="https://zhuanlan.zhihu.com/p/1987939926201882473">即梦AI 营收破亿</a><sup>3</sup>；海外 <a href="https://www.reddit.com/r/NewTubers/search/?q=viral%20format">r/NewTubers 同痛</a><sup>4</sup></li>
+      </ul>
+      <div class="lbl">社群原声（评论区／快访谈）</div>
+      <div class="quote">“存了 300 多条对标，真到自己拍，还是不知道怎么开头。”<span>——美妆博主，2.3 万粉</span></div>
+      <div class="quote">“699 的拆解课学完还是不会拆。我要的是答案，不是方法论。”<span>——探店博主</span></div>
+    </div>
+  </div>
+
+  <!-- 03 -->
+  <div class="sec">
+    <div class="sh"><span class="no">03</span><h2>MVP 样例：不是 PPT，是能跑的项目</h2><span class="hint">随附：代码仓库（含 git 开发历史）／ 多页面原型 ／ Prompt 全文 ／ 样例平移脚本（内容样片）</span></div>
+    <div class="mvp">
+      <div>
+        <div class="flow">
+          <div class="fstep"><div class="sn">STEP 1</div><div class="tt">输入</div><div class="dd">粘贴爆款链接或上传视频</div></div>
+          <div class="fstep"><div class="sn">STEP 2</div><div class="tt">解析</div><div class="dd">1fps 抽帧＋带时间戳转写</div></div>
+          <div class="fstep"><div class="sn">STEP 3</div><div class="tt">拆解 P1</div><div class="dd">多模态 LLM → 骨架卡 JSON</div></div>
+          <div class="fstep"><div class="sn">STEP 4</div><div class="tt">注入 P2</div><div class="dd">人设×骨架 → 可平移度＋策略</div></div>
+          <div class="fstep"><div class="sn">STEP 5</div><div class="tt">平移 P3</div><div class="dd">口播稿＋分镜表＋拍摄清单</div></div>
+        </div>
+        <div class="prompts">
+          <div class="pc"><div class="pt"><i>P1</i> 拆解员</div><div class="px">逐秒分析转写与关键帧 → 结构化骨架卡；禁止虚构，结论必须有依据</div></div>
+          <div class="pc"><div class="pt"><i>P2</i> 策略师</div><div class="px">评估可平移度 0–100，低于 40 直说劝退；标注保留／替换／红线</div></div>
+          <div class="pc"><div class="pt"><i>P3</i> 编剧</div><div class="px">保留骨架、替换血肉；禁止复用对标台词原句</div></div>
+        </div>
+        <div class="eng">
+          <div class="et">工程实现 <i>ENGINEERING</i>——配 Key 即真跑</div>
+          <ul>
+            <li><b>真实可运行：</b>任配 DeepSeek／通义／Kimi／Claude 一个 Key，<span class="mono">starpick.server</span> 让原型页直连流水线（LIVE）；无 Key 离线 30 秒复现</li>
+            <li><b>42 项单元/E2E 测试全绿</b>＋ GitHub Actions CI；含红线回归（复用对标台词即失败）与 LLM 输出容错重试</li>
+            <li><b>标准库零依赖</b>，每阶段 schema 校验；结构化 git 提交完整还原开发过程</li>
+          </ul>
+        </div>
+      </div>
+      <div class="shots">
+        <div class="shot"><img src="assets/demo_card.png" alt=""><div class="cap"><b>原型实截 ①</b>　P1 骨架卡：钩子／结构时间轴／节奏（引擎标识可切 LIVE）</div></div>
+        <div class="shot"><img src="assets/demo_result.png" alt=""><div class="cap"><b>原型实截 ②</b>　P2＋P3：可平移度 86、替换策略、脚本五件套</div></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="row">
+    <!-- 04 -->
+    <div class="sec">
+      <div class="sh"><span class="no">04</span><h2>商业判断</h2><span class="hint">谁付费 ／ 为什么 ／ 定价 ／ 获客</span></div>
+      <p style="margin-bottom:3px;"><b>博主买确定性</b>（被验证的结构，接商单要数据）；<b>商家买人效</b>（1 名运营＋摘星 ≈ 3 名编导）。</p>
+      <table class="price">
+        <tr><td>免费版</td><td>3 条/月</td><td>体验与裂变</td></tr>
+        <tr><td>创作者版</td><td><span class="pp">¥39/月</span>（60 条）或 ¥1.9/条</td><td>锚定人工拆解 1/30 价</td></tr>
+        <tr><td>商家矩阵版</td><td><span class="pp">¥299/月</span></td><td>5 账号 · 竞品监控 · 批量平移</td></tr>
+      </table>
+      <div class="econ">
+        <div class="ec">成本 <b>≈¥0.3/条</b></div>
+        <div class="ec">毛利 <b>&gt;85%</b></div>
+        <div class="ec">目标 CAC <b>&lt;¥30</b></div>
+        <div class="ec">盘子 <b>≈1.8 亿/年</b>（职业主播 1% × ¥468）</div>
+      </div>
+      <div class="lbl">获客</div>
+      <ul>
+        <li><b>产品即内容：</b>官方号每日公开拆解当周最热视频，自证能力</li>
+        <li><b>场景截流：</b>淘宝/闲鱼上架 ¥9.9 拆解服务，交付即导入产品</li>
+        <li><b>渠道分销：</b>创作者训练营／MCN 植入，订阅分成 30%</li>
+      </ul>
+    </div>
+
+    <!-- 05 -->
+    <div class="sec">
+      <div class="sh"><span class="no">05</span><h2>两周验证计划</h2><span class="hint">先人肉交付再收钱 ／ 带明确止损线</span></div>
+      <div class="wk"><div class="wl">W1</div><div class="wc"><ul>
+        <li><b>D1–3</b>　线上模型版跑 30 张骨架卡，校准 Prompt 评分一致性</li>
+        <li><b>D4–7</b>　招 <b>20 名种子博主</b> 1v1 人机混合交付，记录<b>是否照脚本实拍</b></li>
+      </ul></div></div>
+      <div class="wk"><div class="wl">W2</div><div class="wc"><ul>
+        <li><b>D8–10</b>　插件采集通道＋¥9.9 体验包落地页；官号 3 条笔记测自然流量</li>
+        <li><b>D11–14</b>　流失访谈、迭代；1 家代运营矩阵试点（商家版雏形）</li>
+      </ul></div></div>
+      <div class="gokill">
+        <div class="gt">GO ／ KILL（任两项达标→继续；全不达标→转向“评论区选题挖掘”）</div>
+        <p>① <b>≥30%</b> 种子用户照脚本实拍发布　② <b>≥15%</b> 付费 ¥9.9　③ 次周复用 <b>≥40%</b></p>
+      </div>
+      <p style="margin-top:5px;"><b>资源：</b>预算 <span class="hl">≈¥1500</span>（API ¥500＋投流 ¥1000）；本人全职 2 周；工具全部按量付费。</p>
+    </div>
+  </div>
+
+  <!-- footer -->
+  <div class="ft">
+    <div class="risk">
+      <div><b>风险① 平台反爬</b>　插件端采集＋用户授权上传双通道（W2 验证）</div>
+      <div><b>风险② 拆解被抄</b>　护城河是“人设记忆＋账号语料库”，越用越懂你</div>
+      <div><b>风险③ 版权边界</b>　只平移结构不复用表述，红线进 Prompt＋回归测试兜底</div>
+    </div>
+    <div class="srcs">资料来源（检索 2026.06.13，PDF 版可直接点击；完整清单见仓库 evidence_links.md）：
+      1 <a href="https://s.taobao.com/search?q=%E5%AF%B9%E6%A0%87%E8%B4%A6%E5%8F%B7%E6%8B%86%E8%A7%A3">淘宝检索「对标账号拆解」</a>
+      2 <a href="https://www.yicai.com/news/102919501.html">第一财经：可灵AI全年收入约1.4亿美元</a>
+      3 <a href="https://zhuanlan.zhihu.com/p/1987939926201882473">即梦AI运营数据解析（2025.04 用户600万+、营收破亿）</a>
+      4 <a href="https://www.reddit.com/r/NewTubers/search/?q=viral%20format">Reddit r/NewTubers “viral format” 检索</a>
+      5 <a href="http://www.news.cn/tech/20250327/39664326a8244f9ba7489821817fcd68/c.html">《中国网络视听发展研究报告(2025)》（新华网）：职业主播3880万、日产内容1.3亿条</a>
+      ② 三图为本人于抖音/小红书/快手站内检索实截。</div>
+    <div class="meta">
+      <div>本页与随附仓库（42 项测试全绿、配 Key 即真跑）均由本人以 <b>Claude Code 驱动的 AI 工作流</b>完成——对题目「用 AI 提升内容效率」的自证。</div>
+      <div class="r">附件：① 代码仓库 starpick/（README 含运行说明）<br>② 原型 demo/index.html　③ evidence_links.md</div>
+    </div>
+  </div>
+
+</div>
+</body>
+</html>

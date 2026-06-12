@@ -4,6 +4,10 @@ on:
   push:
   pull_request:
 
+defaults:
+  run:
+    working-directory: starpick
+
 jobs:
   test:
     runs-on: ubuntu-latest
