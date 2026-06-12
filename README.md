@@ -9,7 +9,7 @@
 - **方案**：把博主"拆对标→平移成自己脚本"这个已被付费验证的手工流程（闲鱼已售 90+）产品化，3 分钟出可拍脚本。
 - **快速体验**：`cd starpick && make demo`，零依赖零 Key，30 秒离线跑通五段流水线。
 - **真实运行**：任配 DeepSeek/通义/Kimi/OpenAI/Claude 一个 Key，`python3 -m starpick.server` 打开四页面原型 LIVE 直连流水线。
-- **在线体验**：http://168.107.26.178:8765（自部署演示服务；若临时不可访问，效果见附件演示视频）。
+- **在线体验**：http://168.107.26.178:8765/ （自部署演示服务，根目录附 `在线Demo_摘星StarPick.url` 快捷方式；若临时不可访问，效果见附件演示视频）。
 - **质量**：45 项单元/E2E 测试全绿＋GitHub Actions CI，含"复用对标台词即失败"红线回归与 LLM 输出容错重试（见 [六、测试](#六通过了哪些测试)）。
 - **过程**：结构化 commit 历史完整还原从脚手架到多供应商真跑的开发路径（见 [七、Git 历史](#七git-历史)）。
 - **证据**：三平台检索＋闲鱼/淘宝在售实截（`assets/`），可点击链接清单（`starpick/evidence_links.md`）。
@@ -21,6 +21,7 @@
 ```
 dxm_test/（本仓库根）
 ├── 小满摘星计划_笔试_内容AI_摘星StarPick.pdf   ← 主提交物：一页 A4，资料来源与仓库链接均可点击
+├── 在线Demo_摘星StarPick.url                   ← 在线 Demo 快捷方式（http://168.107.26.178:8765/）
 ├── starpick_onepager.html                      ← 一页纸源文件（改字后可重渲染，命令见下）
 ├── assets/                                     ← 一页纸引用的图片
 │   ├── douyin_search.png / xhs_search.png / kuaishou_search.png   ← 三平台站内检索实截（自摄证据）
@@ -62,7 +63,7 @@ python3 -m starpick.server            # 配了 Key：原型页直连真实流水
 python3 -m starpick.server --offline  # 没配 Key：金样回放
 ```
 
-公网部署（笔试演示服务器 http://168.107.26.178:8765 即此方式）：
+公网部署（笔试演示服务器 http://168.107.26.178:8765/ 即此方式）：
 
 ```bash
 git clone https://github.com/kimlinsung/dxm_test && cd dxm_test/starpick
