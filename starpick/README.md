@@ -17,7 +17,7 @@ StarPick 把这个真实付费的工作流产品化：**保留爆款骨架，替
 
 ```bash
 make demo    # MockLLM 回放金样，完整跑通五段流水线，产出 output/report.md
-make test    # 42 项单元 + E2E 测试（stdlib unittest，无第三方依赖）
+make test    # 45 项单元 + E2E 测试（stdlib unittest，无第三方依赖）
 ```
 
 ### 2. 真实运行（任配一个 API Key）
@@ -46,7 +46,7 @@ DEEPSEEK_API_KEY=sk-... python3 -m starpick.server   # 有 Key：真实模型
 ```
 
 浏览器打开 `http://127.0.0.1:8765`，原型含 **首页 / 工作台 / 历史记录 / 我的人设** 四个页面：
-工作台点「拆解」即通过 `POST /api/analyze` 真正跑一遍 P1→P2→P3，顶栏显示 `LIVE · 引擎与模型`；
+工作台点「拆解」即真正跑一遍 P1→P2→P3：服务端经 `POST /api/analyze/stream` **逐阶段流式推送真实进度与耗时**，前端实时显示进度条、计时与可取消按钮，顶栏显示 `LIVE · 引擎与模型`；
 每次拆解自动存入「历史记录」（localStorage），可载入复看。
 直接双击 `demo/index.html`（不起服务端）则回退内置样例；`?view=work` 可直达工作台。
 
@@ -77,13 +77,13 @@ starpick/
 │   ├── schema.py       # 骨架卡/策略/脚本 三级校验
 │   ├── llm.py          # 多供应商客户端 + make_llm 工厂 + MockLLM（金样回放）
 │   ├── pipeline.py     # 五段编排与报告生成
-│   ├── server.py       # 本地服务端：原型页直连真实流水线（POST /api/analyze）
+│   ├── server.py       # 本地服务端：/api/health、/api/analyze、/api/analyze/stream（逐阶段流式）
 │   └── cli.py          # 命令行入口
 ├── fixtures/
 │   ├── sample_video/   # 演示素材：转写 + 1fps 画面标注
 │   ├── persona_office.json
 │   └── golden/         # 三阶段金样（E2E 基准，也是离线演示数据源）
-├── tests/              # 42 项单元 + E2E 测试（含工厂逻辑、服务端 HTTP 链路、容错重试）
+├── tests/              # 45 项单元 + E2E 测试（含工厂、流式推送、容错重试、红线回归）
 ├── demo/index.html     # 多页面产品原型：首页/工作台/历史(localStorage)/人设，连服务端真跑
 ├── evidence_links.md   # 用户证据可点击链接清单（对应一页纸脚注）
 └── .github/workflows/  # CI：lint + 测试 + 离线 demo 冒烟，Python 3.11/3.12 矩阵

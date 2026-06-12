@@ -54,6 +54,17 @@ class PipelineUnitTest(unittest.TestCase):
         with self.assertRaisesRegex(PipelineError, r"\[P2\]"):
             _parse_json("这不是 JSON", "P2")
 
+    def test_on_stage_callback_order(self):
+        bundle, persona = make_inputs()
+        events = []
+        run_pipeline(bundle, persona, MockLLM(FIXTURES / "golden"),
+                     on_stage=lambda label, phase: events.append((label, phase)))
+        self.assertEqual(events, [
+            ("P1", "start"), ("P1", "done"),
+            ("P2", "start"), ("P2", "done"),
+            ("P3", "start"), ("P3", "done"),
+        ])
+
     def test_report_contains_all_sections(self):
         bundle, persona = make_inputs()
         report = run_pipeline(bundle, persona, MockLLM(FIXTURES / "golden"))

@@ -86,7 +86,10 @@ def _md_stage(llm, prompt: str, *, stage: str, label: str) -> str:
     raise PipelineError(f"[{label}] 重试 {MAX_RETRIES} 次后仍不合规：{last}")
 
 
-def run_pipeline(bundle: VideoBundle, persona: dict, llm) -> Report:
+def run_pipeline(bundle: VideoBundle, persona: dict, llm, on_stage=None) -> Report:
+    """on_stage(label, phase)：phase 为 "start"/"done"，供服务端向前端流式推送真实进度。"""
+    notify = on_stage or (lambda label, phase: None)
+
     # P1 拆解员：视频素材 → 爆款骨架卡
     p1 = render(
         load_prompt("p1_deconstructor"),
@@ -94,7 +97,9 @@ def run_pipeline(bundle: VideoBundle, persona: dict, llm) -> Report:
         transcript=bundle.transcript,
         frames=bundle.frames,
     )
+    notify("P1", "start")
     skeleton = _json_stage(llm, p1, stage="deconstruct", label="P1", validate=validate_skeleton)
+    notify("P1", "done")
 
     # P2 策略师：骨架卡 × 账号人设 → 平移策略
     p2 = render(
@@ -102,7 +107,9 @@ def run_pipeline(bundle: VideoBundle, persona: dict, llm) -> Report:
         skeleton_json=json.dumps(skeleton, ensure_ascii=False, indent=2),
         persona_json=json.dumps(persona, ensure_ascii=False, indent=2),
     )
+    notify("P2", "start")
     strategy = _json_stage(llm, p2, stage="strategize", label="P2", validate=validate_strategy)
+    notify("P2", "done")
 
     # P3 编剧：骨架 + 策略 + 人设 → 可拍的平移脚本
     p3 = render(
@@ -111,7 +118,9 @@ def run_pipeline(bundle: VideoBundle, persona: dict, llm) -> Report:
         strategy_json=json.dumps(strategy, ensure_ascii=False, indent=2),
         persona_json=json.dumps(persona, ensure_ascii=False, indent=2),
     )
+    notify("P3", "start")
     transplant_md = _md_stage(llm, p3, stage="transplant", label="P3")
+    notify("P3", "done")
 
     return Report(bundle, persona, skeleton, strategy, transplant_md)
 

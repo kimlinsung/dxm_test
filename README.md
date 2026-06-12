@@ -9,7 +9,7 @@
 - **方案**：把博主"拆对标→平移成自己脚本"这个已被付费验证的手工流程（闲鱼已售 90+）产品化，3 分钟出可拍脚本。
 - **快速体验**：`cd starpick && make demo`，零依赖零 Key，30 秒离线跑通五段流水线。
 - **真实运行**：任配 DeepSeek/通义/Kimi/OpenAI/Claude 一个 Key，`python3 -m starpick.server` 打开四页面原型 LIVE 直连流水线。
-- **质量**：42 项单元/E2E 测试全绿＋GitHub Actions CI，含"复用对标台词即失败"红线回归与 LLM 输出容错重试（见 [六、测试](#六通过了哪些测试)）。
+- **质量**：45 项单元/E2E 测试全绿＋GitHub Actions CI，含"复用对标台词即失败"红线回归与 LLM 输出容错重试（见 [六、测试](#六通过了哪些测试)）。
 - **过程**：结构化 commit 历史完整还原从脚手架到多供应商真跑的开发路径（见 [七、Git 历史](#七git-历史)）。
 - **证据**：三平台检索＋闲鱼/淘宝在售实截（`assets/`），可点击链接清单（`starpick/evidence_links.md`）。
 
@@ -25,7 +25,7 @@ dxm_test/（本仓库根）
 │   ├── douyin_search.png / xhs_search.png / kuaishou_search.png   ← 三平台站内检索实截（自摄证据）
 │   └── demo_card.png / demo_result.png                            ← 产品原型界面实截
 ├── starpick/                                   ← 可运行的 MVP 代码（详见其 README）
-└── .github/workflows/ci.yml                    ← CI：lint + 42 项测试 + 离线 demo 冒烟
+└── .github/workflows/ci.yml                    ← CI：lint + 45 项测试 + 离线 demo 冒烟
 ```
 
 ## 二、方案一句话
@@ -43,7 +43,7 @@ dxm_test/（本仓库根）
 ```bash
 cd starpick
 make demo    # MockLLM 回放金样，完整跑通五段流水线，产出 output/report.md
-make test    # 42 项单元 + E2E 测试（纯标准库，零第三方依赖）
+make test    # 45 项单元 + E2E 测试（纯标准库，零第三方依赖）
 ```
 
 ### 真实运行（任配一个国内可用的 Key）
@@ -62,7 +62,7 @@ python3 -m starpick.server --offline  # 没配 Key：金样回放
 ```
 
 浏览器打开 `http://127.0.0.1:8765`——原型含**首页 / 工作台 / 历史记录 / 我的人设**四个页面；
-工作台点「拆解」后顶栏出现 **LIVE · 引擎与模型** 即为真实调用，每次拆解自动进「历史记录」（localStorage）。
+工作台点「拆解」后，服务端经 NDJSON 流式推送 **P1/P2/P3 真实进度与逐阶段耗时**（前端含进度条/计时/可取消）；每次拆解自动进「历史记录」（localStorage）。
 （直接双击 `starpick/demo/index.html` 不起服务端，也能以内置样例预览全部页面。）
 若模型偶发输出不合规 JSON，流水线会自动修复并带原因重试 2 次（`pipeline.py`）。
 
@@ -73,7 +73,7 @@ python3 -m starpick.server --offline  # 没配 Key：金样回放
 | P1 拆解员 / P2 策略师 / P3 编剧 完整 Prompt | `starpick/prompts/` |
 | 内容样片（平移脚本：口播稿+分镜表+拍摄清单） | `starpick/fixtures/golden/p3_transplant.md` |
 | 五段流水线 + 三级 schema 校验 + 多供应商客户端 | `starpick/starpick/` |
-| 42 项测试（红线回归、服务端 HTTP E2E、容错重试） | `starpick/tests/` |
+| 45 项测试（红线回归、流式推送、容错重试） | `starpick/tests/` |
 | GitHub Actions CI（Python 3.11/3.12 矩阵） | `.github/workflows/ci.yml` |
 | 用户证据可点击链接清单（对应一页纸脚注） | `starpick/evidence_links.md` |
 
@@ -99,15 +99,15 @@ python3 -m starpick.server --offline  # 没配 Key：金样回放
 
 ## 六、通过了哪些测试
 
-`cd starpick && make test` —— **42 项全部通过**（纯标准库 `unittest`，零第三方依赖），按层次分为：
+`cd starpick && make test` —— **45 项全部通过**（纯标准库 `unittest`，零第三方依赖），按层次分为：
 
 | 层次 | 文件 | 数量 | 覆盖什么 |
 |---|---|---|---|
 | Schema 校验 | `tests/test_schema.py` | 10 | 骨架卡/策略/平移脚本三级结构：必填字段、秒数合法性、可平移度 0–100、缺章节拒绝 |
 | Prompt 契约 | `tests/test_prompts.py` | 6 | 三段模板可加载、占位符必须填满、输出契约（只产 JSON、固定章节、禁复用台词）被钉死在模板里 |
-| 流水线编排 | `tests/test_pipeline.py` | 11 | 素材加载、三阶段按序调用、人设注入下游 Prompt、围栏/闲话/尾逗号容错解析、**坏输出→带原因重试→恢复**、重试耗尽报错带阶段名 |
+| 流水线编排 | `tests/test_pipeline.py` | 12 | 素材加载、三阶段按序调用、人设注入下游 Prompt、围栏/闲话/尾逗号容错解析、**坏输出→带原因重试→恢复**、重试耗尽报错带阶段名、阶段回调顺序 |
 | LLM 工厂 | `tests/test_llm_factory.py` | 8 | auto 按 Key 探测供应商、显式指定、缺 Key 报错给指引、`STARPICK_MODEL`/`OPENAI_BASE_URL` 覆盖生效 |
-| 服务端 E2E | `tests/test_server.py` | 3 | 起真实 HTTP 服务：首页可达、`POST /api/analyze` 走通全流水线、404 兜底 |
+| 服务端 E2E | `tests/test_server.py` | 5 | 起真实 HTTP 服务：首页/健康检查可达、一次性与**NDJSON 流式**两种端点走通全流水线（流式逐阶段推送进度）、404 兜底 |
 | 全链路 E2E | `tests/test_e2e.py` | 4 | CLI 入口离线跑通出报告、离线确定性（两次结果一致）、**红线回归：平移脚本含对标台词原句即失败** |
 
 CI（`.github/workflows/ci.yml`）在 Python 3.11/3.12 矩阵上跑 lint + 全部测试 + 离线 demo 冒烟。

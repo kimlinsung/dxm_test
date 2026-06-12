@@ -37,6 +37,11 @@
   .progress .ln.done::before{ content:"✓ "; color:var(--red); font-weight:700; }
   .progress .ln.doing::before{ content:"▸ "; color:var(--ink); }
   .progress .ln.err{ color:var(--red); font-weight:700; }
+  .pbar{ height:3px; background:#e8e5df; margin-bottom:8px; }
+  .pbar i{ display:block; height:100%; width:2%; background:var(--red); transition:width .9s linear; }
+  .tipline{ font-size:11px; color:var(--sub); margin-top:7px; border-top:1px dashed var(--line); padding-top:6px; }
+  .pcancel{ margin-top:8px; border:1px solid var(--ink); background:transparent; font-size:11px; padding:3px 11px; cursor:pointer; }
+  .pcancel:hover{ border-color:var(--red); color:var(--red); }
 
   .panel{ display:none; background:#fff; border:1px solid var(--line); border-top:3px solid var(--ink); padding:18px 20px; margin-top:12px; }
   .panel .ph{ display:flex; align-items:baseline; gap:10px; margin-bottom:14px; }
@@ -176,7 +181,7 @@
 
 <div class="topbar"><div class="in">
   <div class="name">摘星 <em>StarPick</em></div>
-  <div class="ver mono">prototype v0.3</div>
+  <div class="ver mono">prototype v0.4</div>
   <div class="nav">
     <button data-v="home" class="on" onclick="switchView('home')">首页</button>
     <button data-v="work" onclick="switchView('work')">工作台</button>
@@ -374,13 +379,84 @@ function runProgress(el, lines, after){
   return nodes;
 }
 
-async function fetchLive(){
+/* ---------- 服务端探测与流式进度 ---------- */
+let SERVER = false, ENGINE = "";
+
+async function checkHealth(){
   try{
-    const r = await fetch("api/analyze", { method:"POST" });
+    const r = await fetch("api/health");
     const j = await r.json();
-    if (r.ok && j.skeleton) return { data:j, err:null };
-    return { data:null, err:(j.error || ("HTTP "+r.status)) };
-  }catch(e){ return { data:null, err:null }; }   // 无服务端（file:// 等）→ 静默回退样例
+    if (r.ok && j.engine){
+      SERVER = true; ENGINE = j.engine;
+      const t = $("modeTag");
+      t.textContent = "已连接服务端 · " + j.engine;
+      if (!j.offline) t.className = "tag live";
+    }
+  }catch(e){ /* file:// 等：保持“未连接”提示 */ }
+}
+
+const STAGE_LABEL = {
+  P1: "P1 拆解员 · 逐秒分析转写与关键帧 → 骨架卡 JSON",
+  P2: "P2 策略师 · 对比人设，评估可平移度与替换策略",
+  P3: "P3 编剧 · 生成口播稿／分镜表／拍摄清单",
+};
+const TIPS = [
+  "真实模型完整拆解一般需 1–3 分钟：三段大模型调用串行执行，进度为服务端实时推送",
+  "等待时可以先逛「历史记录」「我的人设」，回到工作台结果不会丢",
+  "每段产出都先过 schema 校验：JSON 不合法会自动修复，仍失败则带原因重试（最多 2 次）",
+  "P3 有红线约束：复用对标台词原句会被直接拒绝重写",
+  "赶时间可点下方按钮取消，用内置样例先预览交互",
+];
+
+function makeLive(box, onCancel){
+  box.style.display = "block";
+  box.innerHTML = '<div class="pbar"><i></i></div><div class="plines"></div>' +
+                  '<div class="tipline"></div><button class="pcancel">取消等待，改用内置样例预览</button>';
+  const bar = box.querySelector(".pbar i"), holder = box.querySelector(".plines"),
+        tipEl = box.querySelector(".tipline"), btn = box.querySelector(".pcancel");
+  btn.onclick = onCancel;
+  const t0 = Date.now();
+  let active = null, activeBase = "", ti = 0;
+  tipEl.textContent = "提示：" + TIPS[0];
+  const timer = setInterval(() => {
+    const s = (Date.now() - t0) / 1000;
+    bar.style.width = (100 * (1 - Math.exp(-s / 40))).toFixed(1) + "%";
+    if (active) active.textContent = activeBase + "（已用 " + Math.floor(s) + "s）";
+  }, 1000);
+  const tipTimer = setInterval(() => { ti = (ti + 1) % TIPS.length; tipEl.textContent = "提示：" + TIPS[ti]; }, 7000);
+  return {
+    line(text){ const d = document.createElement("div"); d.className = "ln doing"; d.textContent = text;
+                holder.appendChild(d); active = d; activeBase = text; },
+    done(text){ if (active){ active.className = "ln done"; if (text) active.textContent = text; active = null; } },
+    err(text){ const d = document.createElement("div"); d.className = "ln err"; d.textContent = text; holder.appendChild(d); },
+    finish(){ clearInterval(timer); clearInterval(tipTimer); bar.style.width = "100%";
+              tipEl.remove(); btn.remove(); if (active){ active.className = "ln done"; active = null; } },
+  };
+}
+
+async function readStream(resp, ui){
+  const reader = resp.body.getReader(), dec = new TextDecoder();
+  let buf = "", result = null, errMsg = null;
+  const startedAt = {};
+  while (true){
+    const { done, value } = await reader.read();
+    if (done) break;
+    buf += dec.decode(value, { stream: true });
+    let i;
+    while ((i = buf.indexOf("\n")) >= 0){
+      const line = buf.slice(0, i).trim(); buf = buf.slice(i + 1);
+      if (!line) continue;
+      const ev = JSON.parse(line);
+      if (ev.event === "stage" && ev.phase === "start"){ startedAt[ev.stage] = ev.t; ui.line(STAGE_LABEL[ev.stage] || ev.stage); }
+      if (ev.event === "stage" && ev.phase === "done"){
+        const dur = (ev.t - (startedAt[ev.stage] || 0)).toFixed(1);
+        ui.done((STAGE_LABEL[ev.stage] || ev.stage).split(" · ")[0] + " 完成 · 用时 " + dur + "s");
+      }
+      if (ev.event === "result") result = ev.data;
+      if (ev.event === "error") errMsg = ev.error;
+    }
+  }
+  return { result, errMsg };
 }
 
 function renderCard(d){
@@ -456,30 +532,63 @@ function renderResult(d){
   if (parts.length) $("tabbody").innerHTML = bodies[parts[0].slice(0,parts[0].indexOf("\n")).trim()];
 }
 
+function showCardPanels(){
+  saveHistory(DATA);
+  renderCard(DATA);
+  $("cardPanel").style.display = "block";
+  $("step2").style.display = "block";
+  $("step2").scrollIntoView({behavior:"smooth"});
+  $("btn1").disabled = false;   // 允许再次拆解，记录会继续进「历史」
+}
+
 async function deconstruct(){
   $("btn1").disabled = true;
-  const pending = fetchLive();
-  runProgress($("prog1"), [
-    "解析链接，拉取视频流（56s · 1080p）",
-    "抽帧 1fps ＋ Whisper 带时间戳转写",
-    "P1 拆解员：多模态分析 → 爆款骨架卡 JSON",
-    "P2/P3：策略评估与平移脚本生成",
-  ], async () => {
-    const wait = document.createElement("div");
-    wait.className = "ln doing"; wait.textContent = "等待流水线返回…";
-    $("prog1").appendChild(wait);
-    const { data, err } = await pending;
-    wait.className = "ln done"; wait.textContent = "流水线返回";
-    DATA = data || SAMPLE;
-    if (data){ const t=$("modeTag"); t.textContent = "LIVE · " + data.engine; t.className = "tag live"; }
-    if (err){ const e=document.createElement("div"); e.className="ln err";
-              e.textContent = "服务端错误：" + err + "（已回退内置样例）"; $("prog1").appendChild(e); }
-    renderCard(DATA);
-    saveHistory(DATA);
-    $("cardPanel").style.display = "block";
-    $("step2").style.display = "block";
-    $("step2").scrollIntoView({behavior:"smooth"});
-  });
+
+  // 无服务端（file:// 直开）：快速样例动画
+  if (!SERVER){
+    runProgress($("prog1"), [
+      "解析链接，拉取视频流（56s · 1080p）",
+      "抽帧 1fps ＋ Whisper 带时间戳转写",
+      "P1 拆解员：多模态分析 → 爆款骨架卡 JSON",
+      "P2/P3：策略评估与平移脚本生成（内置样例）",
+    ], () => { DATA = SAMPLE; showCardPanels(); });
+    return;
+  }
+
+  // 有服务端：流式真实进度 + 计时 + 可取消
+  const ctrl = new AbortController();
+  let cancelled = false;
+  const ui = makeLive($("prog1"), () => { cancelled = true; ctrl.abort(); });
+  ui.line("连接服务端流水线（" + ENGINE + "）…");
+  try{
+    const resp = await fetch("api/analyze/stream", { method: "POST", signal: ctrl.signal });
+    if (!resp.ok || !resp.body) throw new Error("HTTP " + resp.status);
+    ui.done("已连接 · " + ENGINE);
+    const { result, errMsg } = await readStream(resp, ui);
+    ui.finish();
+    if (result){
+      DATA = result;
+      const t = $("modeTag"); t.textContent = "LIVE · " + result.engine; t.className = "tag live";
+    } else {
+      DATA = SAMPLE;
+      ui.err("流水线错误：" + (errMsg || "未收到结果") + "（已回退内置样例）");
+    }
+  }catch(e){
+    ui.finish();
+    if (cancelled){
+      DATA = SAMPLE;
+      ui.err("已取消等待，使用内置样例预览（后台请求已中止）");
+    } else {
+      // 流式端点不可用（旧版服务端等）→ 回退一次性接口 → 再回退样例
+      try{
+        const r = await fetch("api/analyze", { method: "POST" });
+        const j = await r.json();
+        DATA = (r.ok && j.skeleton) ? j : SAMPLE;
+        if (!(r.ok && j.skeleton)) ui.err("服务端错误：" + (j.error || r.status) + "（已回退内置样例）");
+      }catch(_){ DATA = SAMPLE; ui.err("连接中断（已回退内置样例）"); }
+    }
+  }
+  showCardPanels();
 }
 
 function transplant(){
@@ -554,6 +663,7 @@ function renderPersonaPage(d){
 }
 
 /* ---------- 初始化（支持 ?view=work 直达） ---------- */
+checkHealth();
 switchView(new URLSearchParams(location.search).get("view") || "home");
 </script>
 </body>

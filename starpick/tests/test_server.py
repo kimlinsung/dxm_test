@@ -41,6 +41,27 @@ class ServerTest(unittest.TestCase):
         self.assertIn("### 分镜表", payload["transplant_md"])
         self.assertIn("金样回放", payload["engine"])
 
+    def test_health_reports_engine(self):
+        with urllib.request.urlopen(f"{self.base}/api/health", timeout=10) as resp:
+            payload = json.loads(resp.read().decode("utf-8"))
+        self.assertEqual(resp.status, 200)
+        self.assertIn("金样回放", payload["engine"])
+        self.assertTrue(payload["offline"])
+
+    def test_stream_emits_stage_events_then_result(self):
+        req = urllib.request.Request(f"{self.base}/api/analyze/stream", data=b"{}", method="POST")
+        with urllib.request.urlopen(req, timeout=30) as resp:
+            lines = [json.loads(l) for l in resp.read().decode("utf-8").splitlines() if l.strip()]
+        self.assertEqual(lines[0]["event"], "start")
+        stages = [(e["stage"], e["phase"]) for e in lines if e["event"] == "stage"]
+        self.assertEqual(stages, [
+            ("P1", "start"), ("P1", "done"),
+            ("P2", "start"), ("P2", "done"),
+            ("P3", "start"), ("P3", "done"),
+        ])
+        self.assertEqual(lines[-1]["event"], "result")
+        self.assertEqual(lines[-1]["data"]["strategy"]["transferability"], 86)
+
     def test_unknown_path_404(self):
         try:
             urllib.request.urlopen(f"{self.base}/nope", timeout=10)
