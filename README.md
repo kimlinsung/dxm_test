@@ -22,6 +22,8 @@
 dxm_test/（本仓库根）
 ├── 小满摘星计划_笔试_内容AI_摘星StarPick.pdf   ← 主提交物：一页 A4，资料来源与仓库链接均可点击
 ├── 在线Demo_摘星StarPick.url                   ← 在线 Demo 快捷方式（http://168.107.26.178:8765/）
+├── 度小满摘星计划_…_摘星StarPick.mov           ← 附件演示视频（在线 Demo 操作实录；页面注明不可访问时看此视频）
+├── 度小满摘星计划_…_摘星StarPick.pdf           ← 主提交 PDF 的提交命名副本（内容与下行文件一致）
 ├── starpick_onepager.html                      ← 一页纸源文件（改字后可重渲染，命令见下）
 ├── assets/                                     ← 一页纸引用的图片
 │   ├── douyin_search.png / xhs_search.png / kuaishou_search.png   ← 三平台站内检索实截（自摄证据）
