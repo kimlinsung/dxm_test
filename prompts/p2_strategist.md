@@ -27,5 +27,6 @@
 ## 输出约定（严格遵守）
 
 - **只输出一个 JSON 对象**：`transferability`、`rationale`、`keep[]`、`replace[{element,from,to,reason}]`、`red_lines[]`。
+- 字符串内部如需引号，使用中文引号「」或“ ”，**禁止未转义的英文双引号**；JSON 前后不要任何多余文字。
 - 「保留结构、替换血肉」：keep 里不允许出现任何台词原文。
 - 评分要诚实，宁可低分劝退，不可高分误导用户开拍。

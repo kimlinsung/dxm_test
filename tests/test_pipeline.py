@@ -62,5 +62,49 @@ class PipelineUnitTest(unittest.TestCase):
             self.assertIn(section, text)
 
 
+class FlakyLLM:
+    """第一次 P1 输出坏 JSON（缺逗号），之后回放金样——复现真实模型的偶发不合规。"""
+
+    def __init__(self, golden_dir, bad_times=1):
+        self.inner = MockLLM(golden_dir)
+        self.bad_left = bad_times
+        self.calls = []
+
+    def complete(self, prompt, *, stage):
+        self.calls.append({"stage": stage, "prompt": prompt})
+        if stage == "deconstruct" and self.bad_left > 0:
+            self.bad_left -= 1
+            return '{"hook": {"type": "反常识宣言" "line": "缺逗号"}}'
+        return self.inner.complete(prompt, stage=stage)
+
+
+class AlwaysBadLLM:
+    def complete(self, prompt, *, stage):
+        return "我觉得这条视频拆不了。"
+
+
+class PipelineRobustnessTest(unittest.TestCase):
+    def test_json_with_prose_and_fence_parsed(self):
+        raw = '好的，以下是拆解结果：\n```json\n{"a": 1}\n```\n希望对你有帮助！'
+        self.assertEqual(_parse_json(raw, "P1"), {"a": 1})
+
+    def test_trailing_comma_repaired(self):
+        self.assertEqual(_parse_json('{"a": [1, 2,],}', "P1"), {"a": [1, 2]})
+
+    def test_retry_recovers_from_bad_output(self):
+        bundle, persona = make_inputs()
+        llm = FlakyLLM(FIXTURES / "golden")
+        report = run_pipeline(bundle, persona, llm)
+        self.assertEqual(report.strategy["transferability"], 86)
+        p1_calls = [c for c in llm.calls if c["stage"] == "deconstruct"]
+        self.assertEqual(len(p1_calls), 2)
+        self.assertIn("上一次的输出被系统拒绝", p1_calls[1]["prompt"])
+
+    def test_retry_exhaustion_raises_with_stage(self):
+        bundle, persona = make_inputs()
+        with self.assertRaisesRegex(PipelineError, r"\[P1\] 重试"):
+            run_pipeline(bundle, persona, AlwaysBadLLM())
+
+
 if __name__ == "__main__":
     unittest.main()

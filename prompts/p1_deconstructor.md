@@ -35,4 +35,6 @@
 - **只输出一个 JSON 对象**，不要任何解释性文字。
 - 字段名固定为：`hook{type,line,start,end,why_it_works}`、`structure[{name,start,end,purpose}]`、`pacing{avg_shot_seconds,info_beats_per_minute,note}`、`emotion_curve[]`、`retention_devices[]`、`cta{type,line,position_seconds}`。
 - 时间一律用整数秒；`hook.line` 必须摘自转写原文。
+- 字符串内部如需引号，使用中文引号「」或“ ”，**禁止未转义的英文双引号**；数值字段只写数字，不带单位。
+- JSON 前后不要添加任何说明文字、注释或代码围栏。
 - **禁止虚构**：所有结论必须能在转写或画面描述中找到依据；没有依据的维度填 `"未观察到"`。
