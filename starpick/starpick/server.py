@@ -124,17 +124,19 @@ class Handler(BaseHTTPRequestHandler):
         sys.stderr.write("[server] " + fmt % args + "\n")
 
 
-def make_server(cfg: Config, port: int) -> ThreadingHTTPServer:
+def make_server(cfg: Config, port: int, host: str = "127.0.0.1") -> ThreadingHTTPServer:
     if not cfg.engine:
         llm = make_llm(cfg.provider, offline=cfg.offline, golden_dir=ROOT / "fixtures" / "golden")
         cfg.engine = _engine_name(llm)
     handler = type("BoundHandler", (Handler,), {"cfg": cfg})
-    return ThreadingHTTPServer(("127.0.0.1", port), handler)
+    return ThreadingHTTPServer((host, port), handler)
 
 
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(prog="starpick.server", description="StarPick 原型服务端")
     parser.add_argument("--port", type=int, default=8765)
+    parser.add_argument("--host", default="127.0.0.1",
+                        help="监听地址；公网部署用 --host 0.0.0.0（配合防火墙/安全组放行端口）")
     parser.add_argument("--provider", default="auto", choices=PROVIDERS)
     parser.add_argument("--offline", action="store_true", help="金样回放，无需 Key")
     parser.add_argument("--fixture", default=Config.fixture)
@@ -146,8 +148,9 @@ def main(argv: list[str] | None = None) -> int:
     cfg.fixture, cfg.persona = args.fixture, args.persona
 
     # 启动时先验证一次模型配置，配置错误立刻失败而不是等首个请求
-    server = make_server(cfg, args.port)
-    print(f"StarPick 原型服务端  http://127.0.0.1:{args.port}   引擎: {cfg.engine}")
+    server = make_server(cfg, args.port, args.host)
+    shown = "127.0.0.1" if args.host == "127.0.0.1" else args.host
+    print(f"StarPick 原型服务端  http://{shown}:{args.port}   引擎: {cfg.engine}")
     try:
         server.serve_forever()
     except KeyboardInterrupt:

@@ -41,7 +41,7 @@ python3 -m starpick --provider qwen  # 或显式指定
 ### 3. 原型页真跑（产品 Demo）
 
 ```bash
-python3 -m starpick.server --offline          # 无 Key：金样回放
+python3 -m starpick.server --offline          # 无 Key：金样回放（公网部署加 --host 0.0.0.0）
 DEEPSEEK_API_KEY=sk-... python3 -m starpick.server   # 有 Key：真实模型
 ```
 

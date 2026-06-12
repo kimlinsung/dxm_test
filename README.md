@@ -9,6 +9,7 @@
 - **方案**：把博主"拆对标→平移成自己脚本"这个已被付费验证的手工流程（闲鱼已售 90+）产品化，3 分钟出可拍脚本。
 - **快速体验**：`cd starpick && make demo`，零依赖零 Key，30 秒离线跑通五段流水线。
 - **真实运行**：任配 DeepSeek/通义/Kimi/OpenAI/Claude 一个 Key，`python3 -m starpick.server` 打开四页面原型 LIVE 直连流水线。
+- **在线体验**：http://168.107.26.178:8765（自部署演示服务；若临时不可访问，效果见附件演示视频）。
 - **质量**：45 项单元/E2E 测试全绿＋GitHub Actions CI，含"复用对标台词即失败"红线回归与 LLM 输出容错重试（见 [六、测试](#六通过了哪些测试)）。
 - **过程**：结构化 commit 历史完整还原从脚手架到多供应商真跑的开发路径（见 [七、Git 历史](#七git-历史)）。
 - **证据**：三平台检索＋闲鱼/淘宝在售实截（`assets/`），可点击链接清单（`starpick/evidence_links.md`）。
@@ -61,6 +62,14 @@ python3 -m starpick.server            # 配了 Key：原型页直连真实流水
 python3 -m starpick.server --offline  # 没配 Key：金样回放
 ```
 
+公网部署（笔试演示服务器 http://168.107.26.178:8765 即此方式）：
+
+```bash
+git clone https://github.com/kimlinsung/dxm_test && cd dxm_test/starpick
+nohup python3 -m starpick.server --host 0.0.0.0 --port 8765 --offline > server.log 2>&1 &
+# 配真实 Key 则导出环境变量并去掉 --offline；防火墙/安全组需放行 8765
+```
+
 浏览器打开 `http://127.0.0.1:8765`——原型含**首页 / 工作台 / 历史记录 / 我的人设**四个页面；
 工作台点「拆解」后，服务端经 NDJSON 流式推送 **P1/P2/P3 真实进度与逐阶段耗时**（前端含进度条/计时/可取消）；每次拆解自动进「历史记录」（localStorage）。
 （直接双击 `starpick/demo/index.html` 不起服务端，也能以内置样例预览全部页面。）
@@ -95,7 +104,7 @@ python3 -m starpick.server --offline  # 没配 Key：金样回放
 1. **仓库链接**：`https://github.com/kimlinsung/dxm_test` 写进提交邮件/表单。
 2. **主件**：提交 **PDF 版**（资料来源与仓库链接均可点击）。
 3. **证据留底**：按 `starpick/evidence_links.md` 把各链接点开截图存档，面试追问时出示。
-4. （可选）录一段 30 秒 Demo：`python3 -m starpick.server --offline` 后录屏点击全流程。
+4. **演示视频（必附）**：一页纸已注明“在线 Demo 临时不可访问时见附件视频”——`python3 -m starpick.server` 后录屏完整点一遍（QuickTime「文件→新建屏幕录制」即可）。
 
 ## 六、通过了哪些测试
 
