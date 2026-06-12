@@ -11,21 +11,43 @@
 
 StarPick 把这个真实付费的工作流产品化：**保留爆款骨架，替换为你的血肉**。
 
-## 快速开始（零依赖，离线 30 秒跑通）
+## 快速开始
+
+### 1. 离线演示（零依赖、零 Key，30 秒）
 
 ```bash
 make demo    # MockLLM 回放金样，完整跑通五段流水线，产出 output/report.md
-make test    # 27 个单元 + E2E 测试（stdlib unittest）
+make test    # 38 项单元 + E2E 测试（stdlib unittest，无第三方依赖）
 ```
 
-接真实模型（可选）：
+### 2. 真实运行（任配一个 API Key）
+
+| 供应商 | 环境变量 | 默认模型 |
+|---|---|---|
+| DeepSeek | `DEEPSEEK_API_KEY` | deepseek-chat |
+| 通义千问（阿里百炼） | `DASHSCOPE_API_KEY` | qwen-plus |
+| Kimi（月之暗面） | `MOONSHOT_API_KEY` | moonshot-v1-32k |
+| OpenAI / 任意兼容网关 | `OPENAI_API_KEY`（可选 `OPENAI_BASE_URL`） | gpt-4o-mini |
+| Anthropic Claude | `ANTHROPIC_API_KEY` | claude-sonnet-4-6 |
 
 ```bash
-export ANTHROPIC_API_KEY=sk-...
-python3 -m starpick --fixture fixtures/sample_video --persona fixtures/persona_office.json
+export DEEPSEEK_API_KEY=sk-...      # 任选其一即可
+python3 -m starpick                  # auto 自动探测已配置的 Key
+python3 -m starpick --provider qwen  # 或显式指定
 ```
 
-交互原型：直接用浏览器打开 [`demo/index.html`](demo/index.html)。
+模型可用 `STARPICK_MODEL` 统一覆盖（如 `STARPICK_MODEL=deepseek-reasoner`）。
+
+### 3. 原型页真跑（产品 Demo）
+
+```bash
+python3 -m starpick.server --offline          # 无 Key：金样回放
+DEEPSEEK_API_KEY=sk-... python3 -m starpick.server   # 有 Key：真实模型
+```
+
+浏览器打开 `http://127.0.0.1:8765`，点「拆解」即通过 `POST /api/analyze`
+真正跑一遍 P1→P2→P3，顶栏显示 `LIVE · 引擎与模型`。
+直接双击 `demo/index.html`（不起服务端）则自动回退内置样例，方便快速预览。
 
 ## 架构
 
@@ -52,15 +74,17 @@ starpick/
 │   ├── ingest.py       # 素材接入层（本地 fixture 已实现；链接采集为 W2 路线图，接口已留）
 │   ├── prompts.py      # 模板加载与渲染（残留占位符即报错）
 │   ├── schema.py       # 骨架卡/策略/脚本 三级校验
-│   ├── llm.py          # AnthropicLLM（urllib 直连）+ MockLLM（金样回放）
+│   ├── llm.py          # 多供应商客户端 + make_llm 工厂 + MockLLM（金样回放）
 │   ├── pipeline.py     # 五段编排与报告生成
+│   ├── server.py       # 本地服务端：原型页直连真实流水线（POST /api/analyze）
 │   └── cli.py          # 命令行入口
 ├── fixtures/
 │   ├── sample_video/   # 演示素材：转写 + 1fps 画面标注
 │   ├── persona_office.json
-│   └── golden/         # 三阶段金样（E2E 基准，也是离线 Demo 数据源）
-├── tests/              # 27 个单元 + E2E 测试
-├── demo/index.html     # 可交互产品原型（单文件，双击即开）
+│   └── golden/         # 三阶段金样（E2E 基准，也是离线演示数据源）
+├── tests/              # 38 项单元 + E2E 测试（含工厂逻辑与服务端 HTTP 链路）
+├── demo/index.html     # 产品原型：连服务端真跑 / file:// 回退内置样例
+├── evidence_links.md   # 用户证据可点击链接清单（对应一页纸脚注）
 └── .github/workflows/  # CI：lint + 测试 + 离线 demo 冒烟，Python 3.11/3.12 矩阵
 ```
 
@@ -70,6 +94,7 @@ starpick/
 |---|---|
 | 标准库零依赖 | 评委 `git clone` 后无需任何安装即可复现；验证期最小化环境摩擦 |
 | Mock 层与真实 LLM 同接口 | E2E 测试确定性、零成本；切真实模型只换一个对象 |
+| 多供应商 OpenAI 兼容层 | 国内可用的 DeepSeek/通义/Kimi 任一 Key 即可真跑，不绑定单一厂商 |
 | Prompt 当代码管理 | 模板进版本库、占位符渲染有断言、输出契约被单测钉死（如"禁止复用原台词"有回归测试） |
 | 每阶段 schema 校验 | LLM 输出不可信是工程事实；失败要发生在阶段边界而不是用户面前 |
 | 链接采集留接口不硬做 | 反爬是 W2 要验证的风险项（插件端采集），不在 MVP 期伪造能力 |
