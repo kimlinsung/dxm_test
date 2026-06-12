@@ -1,0 +1,278 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>StarPick 摘星 · 产品原型</title>
+<style>
+  :root{ --ink:#141414; --sub:#5c5c5c; --line:#dcdcdc; --red:#bf3a1e; --bg:#f4f3f0; }
+  *{ margin:0; padding:0; box-sizing:border-box; }
+  body{ font-family:-apple-system,"PingFang SC","Hiragino Sans GB","Microsoft YaHei",sans-serif;
+        background:var(--bg); color:var(--ink); -webkit-font-smoothing:antialiased; }
+  .mono{ font-family:"SF Mono",Menlo,Consolas,monospace; }
+  .wrap{ max-width:920px; margin:0 auto; padding:0 20px 80px; }
+
+  .topbar{ background:var(--ink); color:#fff; }
+  .topbar .in{ max-width:920px; margin:0 auto; padding:14px 20px; display:flex; align-items:baseline; gap:14px; }
+  .topbar .name{ font-family:"Songti SC","Noto Serif SC",serif; font-size:20px; font-weight:900; letter-spacing:2px; }
+  .topbar .name em{ color:#ff6a3d; font-style:normal; }
+  .topbar .ver{ font-size:11px; color:#9a9a9a; }
+  .topbar .tag{ margin-left:auto; font-size:11px; color:#9a9a9a; border:1px solid #3a3a3a; padding:3px 9px; }
+
+  h2.step{ font-family:"Songti SC","Noto Serif SC",serif; font-size:17px; font-weight:900; margin:38px 0 12px;
+           padding-top:14px; border-top:2px solid var(--ink); display:flex; align-items:baseline; gap:10px; }
+  h2.step .no{ color:var(--red); font-size:13px; letter-spacing:1px; }
+  h2.step .tip{ margin-left:auto; font-size:11px; font-weight:400; color:var(--sub); }
+
+  .inputrow{ display:flex; border:1.5px solid var(--ink); background:#fff; }
+  .inputrow input{ flex:1; border:0; outline:0; padding:13px 14px; font-size:13.5px; color:var(--ink); background:transparent; }
+  .inputrow button{ border:0; background:var(--ink); color:#fff; font-size:14px; font-weight:700; letter-spacing:6px;
+                    padding:0 30px; cursor:pointer; }
+  .inputrow button:hover{ background:var(--red); }
+  .inputrow button:disabled{ background:#9a9a9a; cursor:default; }
+
+  .progress{ display:none; margin-top:10px; background:#fff; border:1px solid var(--line); padding:10px 14px; font-size:12px; }
+  .progress .ln{ padding:3px 0; color:var(--sub); }
+  .progress .ln.done::before{ content:"✓ "; color:var(--red); font-weight:700; }
+  .progress .ln.doing::before{ content:"▸ "; color:var(--ink); }
+
+  .panel{ display:none; background:#fff; border:1px solid var(--line); border-top:3px solid var(--ink); padding:18px 20px; margin-top:12px; }
+  .panel .ph{ display:flex; align-items:baseline; gap:10px; margin-bottom:14px; }
+  .panel .ph .t{ font-weight:800; font-size:14px; letter-spacing:1px; }
+  .panel .ph .m{ font-size:11.5px; color:var(--sub); }
+
+  .vidline{ font-size:13px; margin-bottom:14px; }
+  .vidline b{ font-size:14.5px; }
+  .vidline .likes{ color:var(--red); font-weight:700; }
+
+  .hookbox{ border:1.5px solid var(--ink); padding:12px 14px; margin-bottom:14px; display:flex; gap:14px; align-items:baseline; }
+  .hookbox .k{ flex:none; background:var(--ink); color:#fff; font-size:11px; padding:3px 8px; letter-spacing:2px; }
+  .hookbox .line{ font-family:"Songti SC",serif; font-size:16px; font-weight:900; }
+  .hookbox .why{ font-size:11.5px; color:var(--sub); }
+
+  .tl{ margin:6px 0 4px; }
+  .tlbar{ display:flex; height:34px; border:1px solid var(--ink); }
+  .tlbar .seg{ display:flex; align-items:center; justify-content:center; font-size:10.5px; color:#fff;
+               border-right:1px solid #fff; overflow:hidden; white-space:nowrap; }
+  .tlticks{ display:flex; justify-content:space-between; font-size:10px; color:var(--sub); margin-top:3px; }
+  .seglist{ margin-top:10px; width:100%; border-collapse:collapse; }
+  .seglist td{ font-size:11.5px; padding:5px 8px; border:1px solid var(--line); vertical-align:top; }
+  .seglist td:first-child{ white-space:nowrap; font-weight:700; }
+  .seglist td:nth-child(2){ white-space:nowrap; color:var(--sub); }
+
+  .statrow{ display:flex; gap:10px; margin-top:14px; }
+  .stat{ flex:1; border:1px solid var(--line); padding:9px 12px; }
+  .stat .v{ font-size:17px; font-weight:800; }
+  .stat .v em{ font-style:normal; color:var(--red); }
+  .stat .l{ font-size:10.5px; color:var(--sub); margin-top:2px; }
+
+  .personarow{ display:flex; gap:12px; align-items:stretch; }
+  .personacard{ flex:1; background:#fff; border:1px solid var(--line); padding:14px 16px; }
+  .personacard .nm{ font-weight:800; font-size:14px; }
+  .personacard .ds{ font-size:11.5px; color:var(--sub); margin-top:4px; line-height:1.6; }
+  .gobtn{ flex:none; display:flex; align-items:center; justify-content:center; padding:0 34px; background:var(--red);
+          color:#fff; font-size:15px; font-weight:800; letter-spacing:3px; border:0; cursor:pointer; }
+  .gobtn:hover{ background:var(--ink); }
+  .gobtn:disabled{ background:#9a9a9a; cursor:default; }
+
+  .scoreline{ display:flex; gap:16px; align-items:center; margin-bottom:14px; }
+  .scorebig{ font-size:44px; font-weight:900; color:var(--red); line-height:1; }
+  .scorebig small{ font-size:14px; color:var(--ink); font-weight:700; }
+  .scoretxt{ flex:1; font-size:12px; color:var(--sub); line-height:1.6; border-left:3px solid var(--ink); padding-left:12px; }
+
+  .krtable{ width:100%; border-collapse:collapse; margin-bottom:6px; }
+  .krtable th{ font-size:11px; text-align:left; padding:6px 8px; background:var(--ink); color:#fff; font-weight:700; letter-spacing:1px; }
+  .krtable td{ font-size:11.5px; padding:6px 8px; border:1px solid var(--line); line-height:1.55; }
+  .krtable td:first-child{ white-space:nowrap; font-weight:700; }
+  .arrow{ color:var(--red); font-weight:700; }
+
+  .tabs{ display:flex; border-bottom:2px solid var(--ink); margin-top:18px; }
+  .tabs button{ border:0; background:transparent; font-size:12.5px; font-weight:700; padding:9px 16px; cursor:pointer; color:var(--sub); }
+  .tabs button.on{ background:var(--ink); color:#fff; }
+  .tabbody{ background:#fff; border:1px solid var(--line); border-top:0; padding:16px 20px; font-size:12.5px; line-height:1.75; }
+  .tabbody h4{ font-size:12px; letter-spacing:2px; color:var(--red); margin:14px 0 4px; }
+  .tabbody h4:first-child{ margin-top:0; }
+  .tabbody table{ width:100%; border-collapse:collapse; margin-top:6px; }
+  .tabbody table td,.tabbody table th{ border:1px solid var(--line); padding:5px 8px; font-size:11.5px; text-align:left; }
+  .tabbody table th{ background:#efeeea; }
+  .tabbody .sec-label{ display:inline-block; background:#efeeea; padding:1px 7px; font-size:10.5px; color:var(--sub); margin-right:8px; }
+
+  .foot{ margin-top:46px; padding-top:12px; border-top:1px solid var(--line); font-size:10.5px; color:var(--sub); line-height:1.7; }
+</style>
+</head>
+<body>
+
+<div class="topbar"><div class="in">
+  <div class="name">摘星 <em>StarPick</em></div>
+  <div class="ver mono">prototype v0.1</div>
+  <div class="tag">演示数据：内置离线样例（与代码仓库金样一致）</div>
+</div></div>
+
+<div class="wrap">
+
+  <h2 class="step"><span class="no">STEP 1</span>粘贴对标爆款链接<span class="tip">支持抖音 / 小红书，正式版经浏览器插件采集</span></h2>
+  <div class="inputrow">
+    <input id="url" class="mono" value="https://v.douyin.com/i5xQ…（样例：打工人早八快速出门妆）" />
+    <button id="btn1" onclick="deconstruct()">拆解</button>
+  </div>
+  <div class="progress" id="prog1"></div>
+
+  <div class="panel" id="cardPanel">
+    <div class="ph"><span class="t">爆款骨架卡</span><span class="m mono">P1 · Deconstructor 产出 ｜ 结构化 JSON 已过 schema 校验</span></div>
+    <div class="vidline">对标：<b>《打工人早八快速出门妆》</b>　@小鹿的美妆日记　<span class="likes">♥ 124,000</span>　·　56s</div>
+    <div class="hookbox"><span class="k">钩子 0-3s</span><span class="line">“化妆这件事，越快才越好看。”</span><span class="why">反常识宣言 · 3 秒制造认知缺口</span></div>
+    <div class="tl"><div class="tlbar" id="tlbar"></div><div class="tlticks"><span>0s</span><span>14s</span><span>28s</span><span>42s</span><span>56s</span></div></div>
+    <table class="seglist" id="seglist"></table>
+    <div class="statrow">
+      <div class="stat"><div class="v">2.1s<em>/镜头</em></div><div class="l">平均镜头时长</div></div>
+      <div class="stat"><div class="v">8<em>/分钟</em></div><div class="l">信息点密度</div></div>
+      <div class="stat"><div class="v mono" style="font-size:12.5px;line-height:34px;">焦虑→共鸣→好奇→获得感→信任→行动</div><div class="l">情绪曲线</div></div>
+    </div>
+  </div>
+
+  <div id="step2" style="display:none;">
+    <h2 class="step"><span class="no">STEP 2</span>注入我的账号人设<span class="tip">人设档案一次配置，全流程复用</span></h2>
+    <div class="personarow">
+      <div class="personacard">
+        <div class="nm">林岛的工位美妆 <span class="mono" style="font-size:11px;color:var(--sub);">1.8w 粉丝</span></div>
+        <div class="ds">定位：办公室场景平价美妆 ｜ 受众：初入职场女性 ｜ 卖点：工位/电梯/茶水间完成 · 单品 &lt;60 元 ｜ 禁忌：不碰医美、不贩卖焦虑</div>
+      </div>
+      <button class="gobtn" id="btn2" onclick="transplant()">平移 →</button>
+    </div>
+    <div class="progress" id="prog2"></div>
+  </div>
+
+  <div class="panel" id="resultPanel">
+    <div class="ph"><span class="t">平移结果</span><span class="m mono">P2 · Strategist ＋ P3 · Screenwriter 产出</span></div>
+    <div class="scoreline">
+      <div class="scorebig">86<small>/100</small><div style="font-size:11px;color:var(--sub);font-weight:400;margin-top:2px;">可平移度</div></div>
+      <div class="scoretxt">受众同为通勤期职场女性，母题同为“省时变美”；场景从“出门前”平移到“工位/电梯”反而强化账号差异，结构与节奏可整体保留。</div>
+    </div>
+    <table class="krtable">
+      <tr><th>替换元素</th><th>对标原版</th><th></th><th>你的版本</th></tr>
+      <tr><td>场景</td><td>家中梳妆台 + 地铁</td><td class="arrow">→</td><td>工位 / 电梯 / 茶水间</td></tr>
+      <tr><td>钩子</td><td>“化妆越快才越好看”</td><td class="arrow">→</td><td><b>“工位补妆，越懒才越高级”</b></td></tr>
+      <tr><td>产品</td><td>通用底妆流程</td><td class="arrow">→</td><td>60 元内补妆三件套（贴卖点）</td></tr>
+    </table>
+    <div style="font-size:11px;color:var(--sub);">红线：不复用原台词原句 · 不夸大功效 · 不贬低竞品 · 不贩卖容貌焦虑</div>
+
+    <div class="tabs" id="tabs"></div>
+    <div class="tabbody" id="tabbody"></div>
+  </div>
+
+  <div class="foot">
+    StarPick 摘星 · 产品原型（单文件，无后端）。完整流水线、Prompt 全文与 27 项测试见代码仓库：<span class="mono">starpick/</span>　·　「小满摘星计划」笔试 方向三 · 申请人 金林松
+  </div>
+</div>
+
+<script>
+const SEGS = [
+  {name:"钩子",      start:0,  end:3,  purpose:"反常识宣言制造认知缺口，素颜出镜完成身份证明", dark:"#bf3a1e"},
+  {name:"痛点共鸣",  start:3,  end:8,  purpose:"快剪三连复刻目标用户的早晨，建立“这就是我”", dark:"#141414"},
+  {name:"错误示范",  start:8,  end:16, purpose:"先立靶再纠偏，制造信息差，铺垫教学权威", dark:"#3d3d3d"},
+  {name:"三步教学",  start:16, end:44, purpose:"主干交付，每一步绑定一个可感知的省时收益", dark:"#5c5c5c"},
+  {name:"成果对比",  start:44, end:51, purpose:"分屏自证，消解“快 = 糊弄”的怀疑", dark:"#3d3d3d"},
+  {name:"转粉钩子",  start:51, end:56, purpose:"用下集清单作饵，同时收割评论与关注", dark:"#141414"},
+];
+
+const TABS = {
+  "口播脚本": `
+    <h4>口播脚本 · 56s</h4>
+    <p><span class="sec-label">00:00-00:03 钩子</span>工位补妆这件事，越懒才越高级。</p>
+    <p><span class="sec-label">00:03-00:08 痛点</span>是不是你？早上妆容精致出门，下午三点开会，镜子里的自己像加了一层磨砂滤镜。</p>
+    <p><span class="sec-label">00:08-00:16 错误示范</span>最常见的错误，就是直接往暗沉的脸上补粉。底下的油没处理，越补越斑驳，同事还以为你哭过。</p>
+    <p><span class="sec-label">00:16-00:24 第一步</span>先用吸油纸全脸按压五秒，重点鼻翼。油拿走了，妆面立刻干净一半。</p>
+    <p><span class="sec-label">00:24-00:34 第二步</span>只补“三角区”——眼下到颧骨这一小块。用气垫的余粉轻拍，会议室顶光下整张脸都跟着亮。</p>
+    <p><span class="sec-label">00:34-00:44 第三步</span>唇釉点在唇峰和下唇中间，抿开。血色回来了，老板都以为你刚午休回来。</p>
+    <p><span class="sec-label">00:44-00:51 对比</span>全程不到三分钟，茶水间就能完成。左边是下午三点的我，右边是补完的我——哪边像刚上完早八，一眼就懂。</p>
+    <p><span class="sec-label">00:51-00:56 转粉</span>这三件加起来不到 150。想要“抽屉常驻补妆三件套”清单的，评论区扣“补妆”，关注我，周四放。</p>`,
+  "分镜表": `
+    <h4>分镜表</h4>
+    <table><tr><th>时间</th><th>景别</th><th>画面内容</th><th>字幕与贴纸</th></tr>
+    <tr><td>00:00-00:03</td><td>近景怼脸</td><td>工位场景，午后顶光</td><td>大字“越懒才越高级”+ 红色感叹号</td></tr>
+    <tr><td>00:03-00:08</td><td>快剪三连</td><td>精致出门 / 会议室 / 镜前皱眉</td><td>“下午 3 点”时间戳贴纸</td></tr>
+    <tr><td>00:08-00:16</td><td>分屏特写</td><td>左：直接补粉斑驳；右：处理后干净</td><td>红圈标注斑驳位置</td></tr>
+    <tr><td>00:16-00:24</td><td>俯拍手部</td><td>吸油纸按压鼻翼</td><td>秒表倒计时 5 秒</td></tr>
+    <tr><td>00:24-00:34</td><td>镜面视角</td><td>气垫轻拍三角区</td><td>“三角区”虚线框 + “省时 50%”进度条</td></tr>
+    <tr><td>00:34-00:44</td><td>特写</td><td>唇釉点涂、抿唇</td><td>色号字幕</td></tr>
+    <tr><td>00:44-00:51</td><td>左右分屏</td><td>补妆前 vs 补妆后</td><td>“3min 搞定”</td></tr>
+    <tr><td>00:51-00:56</td><td>近景怼脸</td><td>手持三件套对镜头</td><td>“评论区扣‘补妆’”+ 关注动效</td></tr></table>`,
+  "拍摄清单": `
+    <h4>拍摄清单</h4>
+    <p>· 场景：本人工位（午后自然顶光 14:00-15:30）、茶水间镜子、会议室门口走廊<br>
+       · 道具：吸油纸、平价气垫（&lt;60 元）、唇釉（&lt;60 元）、收纳三件套的抽屉盒<br>
+       · 机位：手机支架怼脸位、显示器上沿俯拍位、茶水间镜面反拍位<br>
+       · 服装：通勤衬衫，全片不换装强化真实感</p>`,
+  "备选钩子": `
+    <h4>备选钩子 × 3</h4>
+    <p>1.（同类型 · 反常识宣言）“下午的妆，根本不是补出来的，是减出来的。”——最贴对标骨架，首选<br>
+       2.（冲突提问）“为什么你一补妆就显老五岁？”——更刺，适合投放素材 A/B<br>
+       3.（结果前置）“三分钟，茶水间，老板以为我刚做完护理。”——适合剪 15s 切片导流</p>`,
+  "发布建议": `
+    <h4>发布建议</h4>
+    <p>· 标题：①工位补妆，越懒才越高级 ②下午三点的脸，三分钟救回来 ③抽屉里常驻这三件，加班也是好气色<br>
+       · 封面：左右分屏“下午 3 点 vs 补妆后”，大字“越懒越高级”，红底白字标签“全套&lt;150”<br>
+       · 标签：#工位补妆 #打工人美妆 #平价美妆 #通勤妆 #办公室好物<br>
+       · 时间：工作日 11:30-12:30（午休高峰，与“下午脱妆”场景天然衔接）</p>`
+};
+
+function runProgress(el, lines, after){
+  el.style.display = "block";
+  el.innerHTML = "";
+  let i = 0;
+  const nodes = lines.map(t => { const d = document.createElement("div"); d.className = "ln"; d.textContent = t; el.appendChild(d); return d; });
+  (function tick(){
+    if (i > 0) nodes[i-1].className = "ln done";
+    if (i >= nodes.length){ after(); return; }
+    nodes[i].className = "ln doing"; i++;
+    setTimeout(tick, 520);
+  })();
+}
+
+function deconstruct(){
+  document.getElementById("btn1").disabled = true;
+  runProgress(document.getElementById("prog1"), [
+    "解析链接，拉取视频流（56s · 1080p）",
+    "抽帧 1fps（56 帧）＋ Whisper 带时间戳转写（8 句）",
+    "P1 拆解员：多模态分析 → 爆款骨架卡 JSON",
+    "schema 校验通过（hook / structure / pacing / cta）",
+  ], () => {
+    const bar = document.getElementById("tlbar");
+    const list = document.getElementById("seglist");
+    SEGS.forEach(s => {
+      const seg = document.createElement("div");
+      seg.className = "seg"; seg.style.flex = (s.end - s.start); seg.style.background = s.dark;
+      seg.textContent = s.name; bar.appendChild(seg);
+      const tr = document.createElement("tr");
+      tr.innerHTML = `<td>${s.name}</td><td class="mono">${s.start}-${s.end}s</td><td>${s.purpose}</td>`;
+      list.appendChild(tr);
+    });
+    document.getElementById("cardPanel").style.display = "block";
+    document.getElementById("step2").style.display = "block";
+    document.getElementById("step2").scrollIntoView({behavior:"smooth"});
+  });
+}
+
+function transplant(){
+  document.getElementById("btn2").disabled = true;
+  runProgress(document.getElementById("prog2"), [
+    "P2 策略师：骨架卡 × 人设 → 可平移度评估与替换策略",
+    "P3 编剧：保留骨架、替换血肉 → 口播稿 / 分镜表 / 拍摄清单",
+    "红线校验：未复用对标台词原句 ✓ 未触发人设禁忌 ✓",
+  ], () => {
+    const tabs = document.getElementById("tabs");
+    Object.keys(TABS).forEach((k, i) => {
+      const b = document.createElement("button");
+      b.textContent = k; if (i === 0) b.className = "on";
+      b.onclick = () => { tabs.querySelectorAll("button").forEach(x => x.className = ""); b.className = "on";
+                          document.getElementById("tabbody").innerHTML = TABS[k]; };
+      tabs.appendChild(b);
+    });
+    document.getElementById("tabbody").innerHTML = TABS["口播脚本"];
+    document.getElementById("resultPanel").style.display = "block";
+    document.getElementById("resultPanel").scrollIntoView({behavior:"smooth"});
+  });
+}
+</script>
+</body>
+</html>
